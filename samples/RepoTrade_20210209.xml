@@ -1,0 +1,71 @@
+<Repo_Delete>
+<KeyValue KeyName="UserTranId1">309096</KeyValue>
+<UserTranId1>309096</UserTranId1>
+<FundStructure>CALC</FundStructure>
+</Repo_Delete>
+<ReverseRepo_InsertUpdate>
+<KeyValue KeyName="UserTranId1">309096</KeyValue>
+<UserTranId1>309096</UserTranId1>
+<ActualSettleDate>2021-02-09T00:00:00</ActualSettleDate>
+<AccruedInterest>CALC</AccruedInterest>
+<FundStructure>CALC</FundStructure>
+</ReverseRepo_InsertUpdate>
+<ReverseRepo_InsertUpdate>
+<KeyValue KeyName="UserTranId1">309633</KeyValue>
+<UserTranId1>309633</UserTranId1>
+<Portfolio>TEST_R</Portfolio>
+<LocationAccount>BOCHK</LocationAccount>
+<Investment>Isin=XS2178949561</Investment>
+<EventDate>2021-02-09T00:00:00</EventDate>
+<SettleDate>2021-02-09T00:00:00</SettleDate>
+<ActualSettleDate>2021-03-11T00:00:00</ActualSettleDate>
+<Quantity>114494.03</Quantity>
+<CounterInvestment>USD</CounterInvestment>
+<Price>108.096</Price>
+<NetCounterAmount>100000.0</NetCounterAmount>
+<RepoName>MMRPE3221Q</RepoName>
+<Strategy>Default</Strategy>
+<Coupon>0.95</Coupon>
+<LoanAmount>100000.0</LoanAmount>
+<Broker>BNP-REPO</Broker>
+<AccrualDaysPerMonth>Actual</AccrualDaysPerMonth>
+<AccrualDaysPerYear>360</AccrualDaysPerYear>
+<AccruedInterest>CALC</AccruedInterest>
+<FundStructure>CALC</FundStructure>
+</ReverseRepo_InsertUpdate>
+<ReverseRepo_InsertUpdate>
+<KeyValue KeyName="UserTranId1">309636</KeyValue>
+<UserTranId1>309636</UserTranId1>
+<Portfolio>TEST_R</Portfolio>
+<LocationAccount>BOCHK</LocationAccount>
+<Investment>Isin=HK0000163607</Investment>
+<EventDate>2021-02-09T00:00:00</EventDate>
+<SettleDate>2021-02-11T00:00:00</SettleDate>
+<ActualSettleDate>CALC</ActualSettleDate>
+<OpenEnded>CALC</OpenEnded>
+<Quantity>218595.72</Quantity>
+<CounterInvestment>HKD</CounterInvestment>
+<Price>99.259</Price>
+<NetCounterAmount>200000.0</NetCounterAmount>
+<RepoName>MMRPE9221K</RepoName>
+<Strategy>Default</Strategy>
+<Coupon>1.2</Coupon>
+<LoanAmount>200000.0</LoanAmount>
+<Broker>HSBC-REPO</Broker>
+<AccrualDaysPerMonth>Actual</AccrualDaysPerMonth>
+<AccrualDaysPerYear>360</AccrualDaysPerYear>
+<FundStructure>CALC</FundStructure>
+</ReverseRepo_InsertUpdate>
+<Repo_Delete>
+<KeyValue KeyName="UserTranId1">309633</KeyValue>
+<UserTranId1>309633</UserTranId1>
+<FundStructure>CALC</FundStructure>
+</Repo_Delete>
+<ReverseRepo_InsertUpdate>
+<KeyValue KeyName="UserTranId1">309636</KeyValue>
+<UserTranId1>309636</UserTranId1>
+<ActualSettleDate>CALC</ActualSettleDate>
+<OpenEnded>CALC</OpenEnded>
+<AccruedInterest>CALC</AccruedInterest>
+<FundStructure>CALC</FundStructure>
+</ReverseRepo_InsertUpdate>

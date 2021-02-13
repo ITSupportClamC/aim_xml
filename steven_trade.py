@@ -3,7 +3,23 @@
 # Functions related to Bloomberg AIM XML trade file.
 # 
 
-from dctools import extractTradeFile,getTrade,getDeleteTrade,getFileName,printReadable 
+from aim_xml.steven_tools import extractTradeFile, getTrade, getDeleteTrade \
+								, getFileName, printReadable
+import logging
+logger = logging.getLogger(__name__)
+
+
+
+def getRepoInfoFromFile(updater, file):
+	"""
+	[Function] ([Dictionary] -> [Dictionary]) info updater,
+	[String] file 
+		=> [Iterable] repo trades
+	"""
+	logger.debug('')
+	return map(updater, getTradesFromFile(file))
+
+
 
 def getTradesFromFile(file):
 	"""
@@ -25,6 +41,8 @@ def getTradesFromFile(file):
 	"""
 	return getTrade(extractTradeFile(file))
 
+
+
 def getTradesAfterDeletion(trades):
 	"""
 	[Iterable] trades => [Iterable] trades
@@ -45,34 +63,44 @@ def getTradesAfterDeletion(trades):
 	"""
 	return getDeleteTrade(trades)
 
+
+
 def main():
-    """
-    
-    """
-    import argparse
-    import os
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--file', nargs='?', metavar='input XML file', type=str, help="XML file name")
-    parser.add_argument('-d', '--debug', help='print readable', action='store_true')
-    parser.add_argument('-wd', '--withdeletion', help='Get Trades After Deletion', action='store_true')
-  
-    args = parser.parse_args()
-    if (args.file == None):
-        parser.print_help()
-        return
-    else:
-        filename = getFileName(args.file)
-    if os.path.isfile(filename):
-        trades = getTradesFromFile(filename)
-        if args.withdeletion:
-            tradesAfterDeleteion = getTradesAfterDeletion(trades)
-            if args.debug:
-                printReadable(tradesAfterDeleteion)
-        else:
-            if args.debug:
-                printReadable(trades)
-    else: 
-        print(filename + " file not found!")
+	"""
+
+	"""
+	import argparse
+	import os
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--file', nargs='?', metavar='input XML file', type=str, help="XML file name")
+	parser.add_argument('-d', '--debug', help='print readable', action='store_true')
+	parser.add_argument('-wd', '--withdeletion', help='Get Trades After Deletion', action='store_true')
+
+	args = parser.parse_args()
+	if (args.file == None):
+		parser.print_help()
+		return
+
+	else:
+		filename = getFileName(args.file)
+
+	if os.path.isfile(filename):
+		trades = getTradesFromFile(filename)
+		if args.withdeletion:
+			tradesAfterDeleteion = getTradesAfterDeletion(trades)
+			if args.debug:
+				printReadable(tradesAfterDeleteion)
+
+		else:
+			if args.debug:
+				printReadable(trades)
+	else: 
+		print(filename + " file not found!")
+
+
+
 
 if __name__ == "__main__":
-    main()
+	import logging.config
+	logging.config.fileConfig('logging.config', disable_existing_loggers=False)
+	main()
