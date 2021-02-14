@@ -1,0 +1,7 @@
+# Anything starting with '#' is a comment
+# Loan Master:
+
+<GenevaLoader xmlns="http://www.advent.com/SchemaRevLevel861/Geneva" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.advent.com/SchemaRevLevel861/Geneva masterschema.xsd">
+  <InvestmentRecords>
+  </InvestmentRecords>
+</GenevaLoader>

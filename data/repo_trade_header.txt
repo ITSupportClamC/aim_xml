@@ -1,0 +1,7 @@
+# Anything starting with '#' is a comment
+# Repo Transactions (New Trade, Close, Cancel, and Re-size):
+
+<GenevaLoader xmlns="http://www.advent.com/SchemaRevLevel870/Geneva" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.advent.com/SchemaRevLevel870/Geneva masterschema.xsd">
+  <TransactionRecords>
+  </TransactionRecords>
+</GenevaLoader>

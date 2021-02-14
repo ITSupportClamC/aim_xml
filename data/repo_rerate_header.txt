@@ -1,0 +1,7 @@
+# Anything starting with '#' is a comment
+# Repo Re-rate:
+
+<GenevaLoader xmlns="http://www.advent.com/SchemaRevLevel794/Geneva" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.advent.com/SchemaRevLevel794/Geneva masterschema.xsd">
+  <VariableRateRecords>
+  </VariableRateRecords>
+</GenevaLoader>

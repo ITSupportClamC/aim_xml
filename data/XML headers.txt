@@ -1,0 +1,24 @@
+XML headers.
+
+Re-rate:
+
+<GenevaLoader xmlns="http://www.advent.com/SchemaRevLevel794/Geneva" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.advent.com/SchemaRevLevel794/Geneva masterschema.xsd">
+  <VariableRateRecords>
+  </VariableRateRecords>
+</GenevaLoader>
+
+
+Loan Master:
+
+<GenevaLoader xmlns="http://www.advent.com/SchemaRevLevel861/Geneva" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.advent.com/SchemaRevLevel861/Geneva masterschema.xsd">
+  <InvestmentRecords>
+  </InvestmentRecords>
+</GenevaLoader>
+
+
+Repo Transactions (New Trade, Close, Cancel, and Re-size):
+
+<GenevaLoader xmlns="http://www.advent.com/SchemaRevLevel870/Geneva" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.advent.com/SchemaRevLevel870/Geneva masterschema.xsd">
+  <TransactionRecords>
+  </TransactionRecords>
+</GenevaLoader>

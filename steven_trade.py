@@ -10,13 +10,25 @@ logger = logging.getLogger(__name__)
 
 
 
-def getRepoInfoFromFile(updater, file):
+def getRepoTradeFromFile(file):
 	"""
 	[Function] ([Dictionary] -> [Dictionary]) info updater,
 	[String] file 
 		=> [Iterable] repo trades
 	"""
-	logger.debug('')
+	logger.debug('getRepoTradeFromFile(): {0}'.format(file))
+
+	# updater = lambda d:
+
+
+
+
+def getInfoFromFile(updater, file):
+	"""
+	[Function] ([Dictionary] -> [Dictionary]) info updater,
+	[String] file 
+		=> [Iterable] repo trades
+	"""
 	return map(updater, getTradesFromFile(file))
 
 

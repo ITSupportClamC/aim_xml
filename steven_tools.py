@@ -41,7 +41,7 @@ def extractTradeFile(filename):
     if lines[0].startswith('<GenevaLoader'):
         return lines[1:len(lines)-1]
     else:
-        return ['<TransactionRecords>'] + lines + ['</TransactionRecords>']
+        return ['<Dummy_Record_Header>'] + lines + ['</Dummy_Record_Header>']
 
 
 
@@ -64,11 +64,12 @@ def printReadable(dataset):
 def getTrade(data):
     dataset = []
     
-    if "<TransactionRecords>" not in str(data):
-        return dataset
-
     itemCount = 0
-    passtag = ['<TransactionRecords>', '</TransactionRecords>']
+    passtag = [ '<Dummy_Record_Header>', '</Dummy_Record_Header>'
+              , '<TransactionRecords>', '</TransactionRecords>'
+              , '<InvestmentRecords>', '</InvestmentRecords>'
+              ]
+
     start_transcation_type = \
         [ '<Sell_New>', '<Buy_New>', '<SellShort_New>', '<CoverShort_New>'
         , '<ForwardFX_New>', '<Sell_Delete>', '<Buy_Delete>', '<ReverseRepo_InsertUpdate>'
