@@ -64,7 +64,9 @@ def handleRepoFiles(fileType):
 
 		filesWithHeader = list(map(addRepoHeaders, files))
 		upload(filesWithHeader)
-		return (Constants.STATUS_SUCCESS, '\n'.join(filesWithHeader), files + filesWithHeader)
+		return ( Constants.STATUS_SUCCESS if filesWithHeader != [] \
+					else Constants.STATUS_WARNING
+			   , '\n'.join(filesWithHeader), files + filesWithHeader)
 
 	except:
 		logger.exception('handleRepoFiles()')
@@ -145,12 +147,13 @@ def upload(files):
 		return scriptFile
 	# end of createWinScpScript()
 
-	run( [ getWinScpPath()
-		 , '/script={0}'.format(createWinScpScript(files))
-		 , '/log={0}'.format(join(getCurrentDir(), 'logs', 'winscp_log.log'))
-		 ]
-	   , timeout=getSftpTimeout()
-	   , check=True)
+	if len(files) > 0:
+		run( [ getWinScpPath()
+			 , '/script={0}'.format(createWinScpScript(files))
+			 , '/log={0}'.format(join(getCurrentDir(), 'logs', 'winscp_log.log'))
+			 ]
+		   , timeout=getSftpTimeout()
+		   , check=True)
 
 
 
