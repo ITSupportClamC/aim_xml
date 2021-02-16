@@ -2,12 +2,11 @@
 #
 # Functions related to Bloomberg AIM XML trade file.
 # 
-from aim_xml.steven_tools import getCurrentDir
+from aim_xml.utility import getCurrentDir, getDatetimeAsString
 from steven_utils.file import getFilenameWithoutPath, getParentFolder
 from toolz.functoolz import compose
 from itertools import filterfalse, chain
 from functools import partial
-from datetime import datetime
 from os.path import join
 import logging
 logger = logging.getLogger(__name__)
@@ -28,6 +27,42 @@ def fileToLines(file):
 
 
 
+# [String] file => [Bool] is the file a repo master file
+isRepoMaster = compose(
+	lambda file: \
+		file.lower().startswith('repomaster') and not 'WithHeaders' in file
+  , getFilenameWithoutPath
+)
+
+
+
+# [String] file => [Bool] is the file a repo trade file
+isRepoTrade = compose(
+	lambda file: \
+		file.lower().startswith('repotrade') and not 'WithHeaders' in file
+  , getFilenameWithoutPath
+)
+
+
+
+# [String] file => [Bool] is the file a repo rerate file
+isRepoRerate = compose(
+	lambda file: \
+		file.lower().startswith('reporerate') and not 'WithHeaders' in file
+  , getFilenameWithoutPath
+)
+
+
+
+# [String] file => [Bool] is the file a repo resize file
+isRepoResize = compose(
+	lambda file: \
+		file.lower().startswith('reporesize') and not 'WithHeaders' in file
+  , getFilenameWithoutPath
+)
+
+
+
 def addRepoHeaders(file):
 	"""
 	[String] file => [String] output file
@@ -38,17 +73,14 @@ def addRepoHeaders(file):
 	The function reads the input XML file, add appropriate Geneva headers to
 	its content and saves the output file into the same folder.
 	"""
-	# fileToLines = lambda: file
+	logger.debug('addRepoHeaders(): {0}'.format(file))
 
 	# [String] file => [String] file type
-	getFileTypeFromName = compose(
-		lambda file: \
-			'loan_master' if file.lower().startswith('repomaster') else \
-			'transaction' if file.lower().startswith('repotrade') else \
-			'rerate' if file.lower().startswith('reporerate') else 'others'
+	getFileTypeFromName = lambda file: \
+		'loan_master' if isRepoMaster(file) else \
+		'transaction' if isRepoTrade(file) else \
+		'rerate' if isRepoRerate(file) else 'others'
 
-	  , getFilenameWithoutPath
-	)
 
 	# [String] file => [Tuple] (headers, footers)
 	getHeaderForFile = compose(
@@ -58,13 +90,9 @@ def addRepoHeaders(file):
 
 
 	def getOutputFilename(file):
-		""" [String] file => [String] output file """
-		datetimeToString = lambda: \
-			datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')
-
 
 		getOutputFile = compose(
-			lambda t: t[0] + '_WithHeaders_' + datetimeToString() + t[1]
+			lambda t: t[0] + '_WithHeaders_' + getDatetimeAsString() + t[1]
 		  , lambda file: (file[0:-4], file[-4:])
 		  , getFilenameWithoutPath
 		)

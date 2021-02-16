@@ -4,5 +4,8 @@ __pycache__/
 # ignore the log file
 logs/*
 
+# ignore the winscp scripts
+winscp_scripts/*
+
 # ignore the output csv files
 *.csv
