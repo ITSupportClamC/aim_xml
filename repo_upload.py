@@ -29,8 +29,8 @@ compose(
 	list
   , lambda files: \
   		filter(isRepoMaster, files) if fileType == 'master' else \
-  		filter(lambda fn: isRepoTrade(fn) or isRepoRerate(fn), files) \
-  		if fileType == 'transaction' else \
+  		filter(isRepoTrade, files) if fileType == 'trade' else \
+  		filter(isRepoRerate, files) if fileType == 'rerate' else \
   		filter(isRepoResize, files) if fileType == 'resize' else []
   , lambda directory: getFiles(directory, True)
   , getDataDirectory
@@ -59,7 +59,7 @@ def handleRepoFiles(fileType):
 		if fileType == 'resize':
 			return (Constants.STATUS_WARNING, '\n'.join(files), files)
 
-		if not fileType in ('master', 'transaction'):
+		if not fileType in ('master', 'trade', 'rerate'):
 			return (Constants.STATUS_ERROR, 'invalid file type {0}'.format(fileType), files)
 
 		filesWithHeader = list(map(addRepoHeaders, files))
@@ -104,11 +104,25 @@ def moveFiles(outputDir, files):
 	[String] output directory,
 	[List] files (with full path)
 
-	Side effect: move files to the output directory
+	Side effect: move files to the output directory, after moving
+	the files will be renamed with date time string in their name.
 	"""
+	""" 
+		[String] fn => [String] fn with date time 
+
+		Assume: fn is without path and have only one '.' in it, like
+		xxxxx.xml
+	"""
+	rename = compose(
+		lambda L: L[0] + '_' + getDatetimeAsString() + '.' + L[1]
+	  , lambda fn: fn.split('.')
+	)
+
 	for fn in files:
 		logger.debug('moveFiles(): {0}'.format(fn))
-		shutil.move(fn, join(outputDir, getFilenameWithoutPath(fn)))
+		shutil.move( fn
+				   , join( outputDir
+				   		 , rename(getFilenameWithoutPath(fn))))
 
 
 
@@ -168,7 +182,7 @@ if __name__ == "__main__":
 					   , help="repo XML file type")
 
 	"""
-	There are 3 file types to handle: master, transaction, and resize
+	There are 4 file types to handle: master, trade, rerate, and resize
 	
 	To run the program, do:
 

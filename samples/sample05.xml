@@ -1,0 +1,9 @@
+<GenevaLoader xmlns="http://www.advent.com/SchemaRevLevel758/Geneva" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.advent.com/SchemaRevLevel758/Geneva masterschema.xsd">
+<TransactionRecords>
+<Buy_New>
+<hello />
+<byebye/>
+<good>5</good>
+</Buy_New>
+</TransactionRecords>
+</GenevaLoader>

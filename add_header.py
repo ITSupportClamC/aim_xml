@@ -2,7 +2,8 @@
 #
 # Functions related to Bloomberg AIM XML trade file.
 # 
-from aim_xml.utility import getCurrentDir, getDatetimeAsString
+from aim_xml.utility import getCurrentDir
+from aim_xml.steven_tools import fileToLines
 from steven_utils.file import getFilenameWithoutPath, getParentFolder
 from toolz.functoolz import compose
 from itertools import filterfalse, chain
@@ -10,20 +11,6 @@ from functools import partial
 from os.path import join
 import logging
 logger = logging.getLogger(__name__)
-
-
-
-def fileToLines(file):
-	"""
-	[String] file => [List] lines in the file
-
-	read a file in text mode and returns all its lines
-	"""
-	lines = []
-	with open(file, 'r') as f:
-		lines = f.read().splitlines()
-
-	return lines
 
 
 
@@ -92,7 +79,7 @@ def addRepoHeaders(file):
 	def getOutputFilename(file):
 
 		getOutputFile = compose(
-			lambda t: t[0] + '_WithHeaders_' + getDatetimeAsString() + t[1]
+			lambda t: t[0] + '_WithHeaders' + t[1]
 		  , lambda file: (file[0:-4], file[-4:])
 		  , getFilenameWithoutPath
 		)

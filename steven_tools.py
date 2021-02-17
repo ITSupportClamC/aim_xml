@@ -3,6 +3,7 @@
 # 
 import re
 import os
+from itertools import chain
 
 
 
@@ -16,59 +17,42 @@ def getFileName(filename):
         Return filename with path
     """
     return os.path.join(getCurrentDir(), filename)
-    
 
 
-def dumpFileContent(filename):
+
+def fileToLines(file):
     """
-        Return file contents
+    [String] file => [List] lines in the file
+
+    read a file in text mode and returns all its lines
     """
     lines = []
-    f = open(filename, 'r')
-    lines = f.read().splitlines()
-    f.close()
+    with open(file, 'r') as f:
+        lines = f.read().splitlines()
+
     return lines
 
 
 
-def extractTradeFile(filename):
+def changeLines(lines):
     """
-        Return data before remove NameSpace line or fix TranscationRecords missing line.
+    [List] lines => [Iterable] lines
     """
-    lines = ""
-    with open(filename, 'r') as f:
-        lines = [line.strip("\n") for line in f]
-    if lines[0].startswith('<GenevaLoader'):
-        return lines[1:len(lines)-1]
-    else:
-        return ['<Dummy_Record_Header>'] + lines + ['</Dummy_Record_Header>']
+    if lines[0].startswith('<GenevaLoader') and len(lines) < 4:
+        logger.error('changeLines(): not enough number of lines')
+        raise ValueError
 
+    return chain( ['<Dummy_Record_Header>'] 
+                , lines[2:-2] if lines[0].startswith('<GenevaLoader') else lines
+                , ['</Dummy_Record_Header>'])
 
-
-def printReadable(dataset):
-    print("Transcation(s): ", len(dataset))
-    for index, x in enumerate(dataset):
-        j = x[1]
-        for index2, ii in enumerate(x[0]):
-            if type(j[index2]) == list:
-                for index3, m in enumerate(j[index2][0]):
-                    msg = "trades[{}]['{}']['{}'] = '{}'"
-                    print(msg.format(index, ii, m, j[index2][1][index3]))
-            else:
-                msg = "trades[{}]['{}'] = '{}'"
-                print(msg.format(index, ii, j[index2]))
-    return
-    
 
 
 def getTrade(data):
     dataset = []
-    
     itemCount = 0
-    passtag = [ '<Dummy_Record_Header>', '</Dummy_Record_Header>'
-              , '<TransactionRecords>', '</TransactionRecords>'
-              , '<InvestmentRecords>', '</InvestmentRecords>'
-              ]
+  
+    passtag = ['<Dummy_Record_Header>', '</Dummy_Record_Header>']
 
     start_transcation_type = \
         [ '<Sell_New>', '<Buy_New>', '<SellShort_New>', '<CoverShort_New>'
@@ -98,14 +82,19 @@ def getTrade(data):
             details = []
             indices2 = []
             details2 = []
-            indices.append('transcation_type')
+            indices.append('transaction_type')
             details.append(re.sub('[<>]','', s))
         elif s in end_transcation_type: # Transcation end
             dataset.append([indices, details])
         else: # Process data 
             index = s.find(">")
             endindex = s.find("</")
-            if endindex == -1:
+            simplytagindex = s.find("/>")
+            if simplytagindex >= 0:
+                field = s[s.find("<")+1:simplytagindex]
+                indices.append(field.strip())
+                details.append("")
+            elif endindex == -1:
                 level = 1
                 s = re.sub('[<>]','', s)
                 indices2 = []
@@ -134,7 +123,7 @@ def getTrade(data):
                         data = s[index+1:endindex]
                         details.append(data)
     return dataset
-
+    
 
 
 def getDeleteTrade(dataset):
@@ -146,13 +135,10 @@ def getDeleteTrade(dataset):
             if index1 > -1 and i[1][index1].find('_Delete') > -1: 
                 index2 = j.find('KeyValue')
                 keyValue = i[1][index2]
-#                print(index, i[1][index1], i[1][index2])
                 dataset.remove(dataset[index])
                 deleteKeyValue.append(i[1][index2])
-#        print(deleteKeyValue)
     for index, i in enumerate(dataset):
         for index1, j in enumerate(i[0]):
             if index1 >-1 and j == 'KeyValue' and i[1][index1] in deleteKeyValue:
                 dataset.remove(dataset[index])
- #               print(index, j, index1, i[1][index1])
     return dataset
