@@ -35,7 +35,7 @@ isRepoTrade = compose(
 # [String] file => [Bool] is the file a repo rerate file
 isRepoRerate = compose(
 	lambda file: \
-		file.lower().startswith('reporerate') and not 'WithHeaders' in file
+		file.lower().startswith('repo_rerate') and not 'WithHeaders' in file
   , getFilenameWithoutPath
 )
 
