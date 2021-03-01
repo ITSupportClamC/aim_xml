@@ -3,7 +3,7 @@
 # Read Bloomberg Repo XML file, add headers, then upload to Geneva.
 # 
 from aim_xml.add_header import addRepoHeaders, isRepoMaster, isRepoTrade \
-							, isRepoRerate, isRepoResize
+							, isRepoRerate, isRepoDummyRerate, isRepoResize
 from aim_xml.utility import getDataDirectory, getMailSender, getMailServer \
 							, getMailTimeout, getNotificationMailRecipients \
 							, getSftpTimeout, getWinScpPath, getCurrentDir \
@@ -31,6 +31,7 @@ compose(
   		filter(isRepoMaster, files) if fileType == 'master' else \
   		filter(isRepoTrade, files) if fileType == 'trade' else \
   		filter(isRepoRerate, files) if fileType == 'rerate' else \
+  		filter(isRepoDummyRerate, files) if fileType == 'dummy_rerate' else \
   		filter(isRepoResize, files) if fileType == 'resize' else []
   , lambda directory: getFiles(directory, True)
   , getDataDirectory
@@ -59,7 +60,7 @@ def handleRepoFiles(fileType):
 		if fileType == 'resize':
 			return (Constants.STATUS_WARNING, '\n'.join(files), files)
 
-		if not fileType in ('master', 'trade', 'rerate'):
+		if not fileType in ('master', 'trade', 'rerate', 'dummy_rerate'):
 			return (Constants.STATUS_ERROR, 'invalid file type {0}'.format(fileType), files)
 
 		filesWithHeader = list(map(addRepoHeaders, files))
@@ -182,7 +183,8 @@ if __name__ == "__main__":
 					   , help="repo XML file type")
 
 	"""
-	There are 4 file types to handle: master, trade, rerate, and resize
+	There are 5 file types to handle: master, trade, rerate, dummy_rerate, 
+	and resize
 	
 	To run the program, do:
 

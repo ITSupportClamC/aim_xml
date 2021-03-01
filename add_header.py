@@ -41,6 +41,15 @@ isRepoRerate = compose(
 
 
 
+# [String] file => [Bool] is the file a repo rerate file
+isRepoDummyRerate = compose(
+	lambda file: \
+		file.lower().startswith('dummy_rerate') and not 'WithHeaders' in file
+  , getFilenameWithoutPath
+)
+
+
+
 # [String] file => [Bool] is the file a repo resize file
 isRepoResize = compose(
 	lambda file: \
@@ -66,7 +75,8 @@ def addRepoHeaders(file):
 	getFileTypeFromName = lambda file: \
 		'loan_master' if isRepoMaster(file) else \
 		'transaction' if isRepoTrade(file) else \
-		'rerate' if isRepoRerate(file) else 'others'
+		'rerate' if isRepoRerate(file) or isRepoDummyRerate(file) \
+		else 'others'
 
 
 	# [String] file => [Tuple] (headers, footers)

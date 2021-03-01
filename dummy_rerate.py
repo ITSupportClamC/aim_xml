@@ -3,6 +3,7 @@
 # Read Repo trade file, and create dummy rerate file from it.
 # 
 from aim_xml.repo_datastore import getRepoTradeFromFile
+from aim_xml.repo_upload import getFilesByType
 from steven_utils.file import getFilenameWithoutPath, getParentFolder
 from toolz.functoolz import compose
 from functools import partial
@@ -109,11 +110,10 @@ if __name__ == "__main__":
 	parser.add_argument('file', metavar='file', type=str, help="repo trade XML file")
 
 	"""
-	To test the program, put a repo trade file (without headers) into
-	the local directory and run:
-
-		$ python dummy_rerate.py <repo trade file>
-
+	Search for trade files in the data directory (see config file), for each
+	trade file there, produce dummy rerate file if necessary 
 	"""
-	file = parser.parse_args().file
-	print(createDummyRerateFile(file))
+	logger.debug('main:')
+	for file in getFilesByType('trade'):
+		logger.debug('main: process trade file: {0}'.format(file))
+		logger.debug('main: create dummy rerate file: {0}'.format(createDummyRerateFile(file)))
