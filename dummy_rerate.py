@@ -3,8 +3,10 @@
 # Read Repo trade file, and create dummy rerate file from it.
 # 
 from aim_xml.repo_datastore import getRepoTradeFromFile
+from steven_utils.file import getFilenameWithoutPath, getParentFolder
 from toolz.functoolz import compose
 from functools import partial
+from os.path import join
 import logging
 logger = logging.getLogger(__name__)
 
@@ -51,6 +53,16 @@ def toXMLString(trade):
 
 
 
+def getOutputFilename(file):
+	"""
+	[String] file => [String] input file
+
+	Derive the output file name from the input file
+	"""
+	return 'Dummy_ReRate_' + getFilenameWithoutPath(file)
+
+
+
 def toFile(outputDir, file, text):
 	"""
 	[String] output directory, [String] output file, [String] text 
@@ -58,7 +70,33 @@ def toFile(outputDir, file, text):
 
 	side effect: create an XML file in the output directory
 	"""
-	return ''
+	logger.debug('toFile(): {0}'.format(file))
+	with open(join(outputDir, file), 'w') as f:
+		f.write(text)
+
+	return file
+
+
+
+"""
+	[String] input file => [String] output file
+
+	Read a repo trade file, produce a dummy rerate file for each of the new
+	repo position of type OPEN. return the file name. If there is no such 
+	repo position, then no output file is created and return an empty string.
+
+	Assume: the input repo trade file is without the Geneva headers.
+"""
+createDummyRerateFile = lambda file: \
+compose(
+	lambda s: \
+		toFile(getParentFolder(file), getOutputFilename(file), s) if s != '' else ''
+
+  , lambda L: '\n'.join(L)
+  , partial(map, toXMLString)
+  , getRepoOpenTrades
+)(file)
+
 
 
 
@@ -77,11 +115,5 @@ if __name__ == "__main__":
 		$ python dummy_rerate.py <repo trade file>
 
 	"""
-	# get output directory from input file
-	# get output file name from input file
-	compose(
-		print
-	  , lambda L: '\n'.join(L)
-	  , partial(map, toXMLString)
-	  , getRepoOpenTrades
-	)(parser.parse_args().file)
+	file = parser.parse_args().file
+	print(createDummyRerateFile(file))

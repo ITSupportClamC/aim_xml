@@ -1,0 +1,16 @@
+<VariableRateRecord>
+<Loan>UserTranId1=313562</Loan>
+<RateTable>
+<CommitType>Insert</CommitType>
+<RateDate>2021-01-26T00:00:00</RateDate>
+<Rate>1.1</Rate>
+</RateTable>
+</VariableRateRecord>
+<VariableRateRecord>
+<Loan>UserTranId1=309636</Loan>
+<RateTable>
+<CommitType>Insert</CommitType>
+<RateDate>2021-02-11T00:00:00</RateDate>
+<Rate>1.2</Rate>
+</RateTable>
+</VariableRateRecord>

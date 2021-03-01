@@ -57,13 +57,15 @@ def getTrade(data):
     start_transcation_type = \
         [ '<Sell_New>', '<Buy_New>', '<SellShort_New>', '<CoverShort_New>'
         , '<ForwardFX_New>', '<Sell_Delete>', '<Buy_Delete>', '<ReverseRepo_InsertUpdate>'
-        , '<Repo_InsertUpdate>', '<Repo_Delete>', '<Bond_InsertUpdate>']
+        , '<Repo_InsertUpdate>', '<Repo_Delete>', '<Bond_InsertUpdate>'
+        , '<VariableRateRecord>']
 
 
     end_transcation_type = \
         [ '</Sell_New>', '</Buy_New>', '</SellShort_New>', '</CoverShort_New>'
         , '</ForwardFX_New>', '</Sell_Delete>', '</Buy_Delete>', '</ReverseRepo_InsertUpdate>'
-        , '</Repo_InsertUpdate>', '</Repo_Delete>', '</Bond_InsertUpdate>']
+        , '</Repo_InsertUpdate>', '</Repo_Delete>', '</Bond_InsertUpdate>'
+        , '</VariableRateRecord>']
 
 
     indices = []
