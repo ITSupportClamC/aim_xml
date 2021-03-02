@@ -46,11 +46,12 @@ def handleRepoFiles(fileType):
 
 	This function does not throw any exceptions.
 
-	1. get repo files based on its type (master, transaction, resize)
-
-	3. add header
-	4. send notification email.
-	5. move input files to another directory
+	1. get repo files based on its type (master, trade, rerate
+		dummy_rerate, resize)
+	2. Take action on the file types: add header and upload, or
+		give warning (if it's resize)
+	3. send notification email.
+	4. move input files to another directory
 	"""
 	logger.debug('handleRepoFiles(): {0}'.format(fileType))
 
@@ -183,8 +184,8 @@ if __name__ == "__main__":
 					   , help="repo XML file type")
 
 	"""
-	There are 5 file types to handle: master, trade, rerate, dummy_rerate, 
-	and resize
+	There are 5 file types to handle: master, trade, rerate, 
+	dummy_rerate, and resize
 	
 	To run the program, do:
 
