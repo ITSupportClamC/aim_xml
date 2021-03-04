@@ -2,8 +2,7 @@
 # 
 
 import unittest2
-from aim_xml.repo_datastore import getRepoMasterFromFile, getRepoTradeFromFile \
-								, getRawDataFromXML
+from aim_xml.repo_data import getRepoTradeFromFile, getRawDataFromXML
 from aim_xml.utility import getCurrentDir
 from os.path import join
 
@@ -17,7 +16,7 @@ class TestRepoDatastore(unittest2.TestCase):
 
 	def testRepoMasterFromFile(self):
 		inputFile = join(getCurrentDir(), 'samples', 'RepoMaster_20210210.xml')
-		info = list(getRepoMasterFromFile(inputFile))
+		info = list(getRawDataFromXML(inputFile))
 		self.assertEqual(5, len(info))
 		self.verifyMaster(info[4])
 
@@ -94,14 +93,14 @@ class TestRepoDatastore(unittest2.TestCase):
 		self.assertEqual('2021-02-09T00:00:00', trade['EventDate'])
 		self.assertEqual('2021-02-09T00:00:00', trade['SettleDate'])
 		self.assertEqual('2021-03-11T00:00:00', trade['ActualSettleDate'])
-		self.assertEqual(114494.03, trade['Quantity'])
+		self.assertEqual('114494.03', trade['Quantity'])
 		self.assertEqual('USD', trade['CounterInvestment'])
-		self.assertEqual(108.096, trade['Price'])
-		self.assertEqual(100000.0, trade['NetCounterAmount'])
+		self.assertEqual('108.096', trade['Price'])
+		self.assertEqual('100000.0', trade['NetCounterAmount'])
 		self.assertEqual('MMRPE3221Q', trade['RepoName'])
 		self.assertEqual('Default', trade['Strategy'])
-		self.assertEqual(0.95, trade['Coupon'])
-		self.assertEqual(100000, trade['LoanAmount'])
+		self.assertEqual('0.95', trade['Coupon'])
+		self.assertEqual('100000.0', trade['LoanAmount'])
 		self.assertEqual('BNP-REPO', trade['Broker'])
 		self.assertEqual('Actual', trade['AccrualDaysPerMonth'])
 		self.assertEqual('360', trade['AccrualDaysPerYear'])

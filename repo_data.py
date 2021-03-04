@@ -1,19 +1,11 @@
 # coding=utf-8
 #
-# Read information from repo XML files and save them to datastore.
-# 
-# Since this modules uses the datastore functions such as addRepoMaster,
-# make sure set the database mode (production or test) before calling 
-# any of them.
+# Read information from repo XML files
 # 
 
 from aim_xml.steven_tools import fileToLines, changeLines, getTrade \
 								, getDeleteTrade, getFileName
 from steven_utils.utility import mergeDict
-from repo_data.data import addRepoMaster, addRepoTransaction \
-						, cancelRepoTransaction, closeRepoTransaction \
-						, rerateRepoTransaction, initializeDatastore \
-						, clearRepoData, getRepo
 from toolz.functoolz import compose
 from functools import partial
 import logging
@@ -104,63 +96,20 @@ def getRepoTradeFromFile(file):
 
 
 
-"""
-	[List] keys to be kept, [Dictionary] d
-		=> [Dictionary] d
-"""
-keepKeys = lambda keys, d: \
-	{k: d[k] for k in set(keys).intersection(set(d))}
-
-
-
-def saveRepoMasterFileToDB(file):
+def getRepoRerateFromFile(file):
 	"""
-	[String] repo master file (without Geneva header) 
-		=> [Int] no. of master entries saved into datastore
+	[String] file 
+		=> [Iterable] ([Dictionary] repo rerate)
 	"""
-	logger.debug('saveRepoMasterFileToDB(): {0}'.format(file))
-	def addRepo(masterInfo):
-		try:
-			addRepoMaster(masterInfo)
-			return 1
-		except:
-			logger.exception('saveRepoMasterFileToDB()')
-			return 0
+	logger.debug('getRepoRerateFromFile(): {0}'.format(file))
 
+	getRateTable = lambda L: dict(zip(L[0], L[1]))
 
 	return \
 	compose(
-		sum
-	  , partial(map, addRepo)
+		partial( map
+		   , lambda d: mergeDict(d, {'TransactionType': d['transaction_type']}))
 	  , partial( map
-	  		   , partial( keepKeys
-	  		   			, ['Code', 'BifurcationCurrency', 'AccrualDaysPerMonth', 'AccrualDaysPerYear']))
-	  , getRawDataFromXML
-	)(file)
-
-
-
-def saveRepoTradeFileToDB(file):
-	"""
-	[String] repo trade file (without Geneva header) 
-		=> [Int] no. of trades saved into datastore
-	"""
-	logger.debug('saveRepoTradeFileToDB(): {0}'.format(file))
-	def addRepo(trade):
-		try:
-			addRepoMaster(trade)
-			return 1
-		except:
-			logger.exception('saveRepoTradeFileToDB()')
-			return 0
-
-
-	return \
-	compose(
-		sum
-	  , partial(map, addRepo)
-	  , partial( map
-	  		   , partial( keepKeys
-	  		   			, ['Code', 'BifurcationCurrency', 'AccrualDaysPerMonth', 'AccrualDaysPerYear']))
+	  		   , lambda el: mergeDict(el, {'RateTable': getRateTable(el['RateTable'])}))
 	  , getRawDataFromXML
 	)(file)

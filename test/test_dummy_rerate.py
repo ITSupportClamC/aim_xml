@@ -2,7 +2,7 @@
 # 
 
 import unittest2
-from aim_xml.repo_datastore import getRepoTradeFromFile
+from aim_xml.repo_data import getRepoTradeFromFile, getRepoRerateFromFile
 from aim_xml.dummy_rerate import createDummyRerateFile
 from aim_xml.utility import getCurrentDir
 from os.path import join
@@ -32,18 +32,17 @@ class TestDummyRerate(unittest2.TestCase):
 
 
 	def verifyFile(self, file):
-		positions = list(getRepoTradeFromFile(file))
+		positions = list(getRepoRerateFromFile(file))
 		self.assertEqual(2, len(positions))
+
 		self.assertEqual('UserTranId1=313562', positions[0]['Loan'])
 		data = positions[0]['RateTable']
-		data = dict(zip(data[0], data[1]))
 		self.assertEqual('Insert', data['CommitType'])
 		self.assertEqual('2021-01-26T00:00:00', data['RateDate'])
 		self.assertEqual('1.1', data['Rate'])
 
 		self.assertEqual('UserTranId1=309636', positions[1]['Loan'])
 		data = positions[1]['RateTable']
-		data = dict(zip(data[0], data[1]))
 		self.assertEqual('Insert', data['CommitType'])
 		self.assertEqual('2021-02-11T00:00:00', data['RateDate'])
 		self.assertEqual('1.2', data['Rate'])
