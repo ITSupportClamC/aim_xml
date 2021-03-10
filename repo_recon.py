@@ -7,13 +7,17 @@
 from aim_xml.utility import getDataDirectory
 from aim_xml.repo_upload import upload, moveFiles, sendNotificationEmail
 from aim_xml.constants import Constants
-from steven_utils.file import getFiles
+from repo_data.data import initializeDatastore, getRepo
+from steven_utils.file import getFiles, getFilenameWithoutPath
+from steven_utils.utility import mergeDict
 from toolz.functoolz import compose
+from toolz.itertoolz import groupby as groupbyToolz
+from toolz.dicttoolz import valmap
 from functools import partial
 from itertools import chain
 from datetime import datetime, timedelta
 from os.path import join
-import logging
+import logging, csv
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +29,7 @@ def getBloombergReconFiles(directory):
 	logger.debug('getBloombergReconFiles(): {0}'.format(directory))
 	files = compose(
 		list
-	  , partial(filter, lambda fn: fn.starswith('Repo_PosRecon_'))
+	  , partial(filter, lambda fn: fn.startswith('Repo_PosRecon_'))
 	  , getFiles
 	)(directory)
 
@@ -43,13 +47,18 @@ def getBloombergReconFiles(directory):
 
 
 
-def getDateFromFilename(reconFile):
-	"""
-	[String] file => [String] date (yyyy-mm-dd)
+"""
+	[String] file => [String] date (yyyymmdd)
 
 	From Bloomberg recon file, get the T day date.
-	"""
-	return ''
+
+	The file name looks like: Repo_PosRecon_20210309_1.csv
+"""
+getDateFromFilename = compose(
+	lambda s: s[0:4] + s[4:6] + s[6:8]
+  , lambda s: s.split('_')[-2]
+  , getFilenameWithoutPath
+)
 
 
 
@@ -59,18 +68,43 @@ def loadRepoPosition(file1, file2):
 	[String] Bloomberg recon file 2 (for open positions)
 		=> [Iterable] ([Dictionary] repo position)
 
-	load positions from csv
-	for file 1, filter those expired on T+1
+	for file 1, filter those closing on T+1,
+	for file 2, filter those still open on T+1
+	combine them
 	"""
 	def getPositions(file):
 		""" [String] file => [Iterable] ([Dictionary] position) """
 		logger.debug('loadRepoPosition(): {0}'.format(file))
-		return []
+		headers = ( 'RepoName', 'Account', 'LoanAmount', 'AccruedInterest'
+				  , 'OpenDate', 'CloseDate', 'InterestRate')
+
+		with open(file, newline='') as csvfile:
+			spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+			return \
+			compose(
+				list
+			  , partial( map
+			  		   , lambda p: mergeDict( p
+			  		   						, {'CloseDate': '99991231' if p['CloseDate'] == '' \
+			  		   							else p['CloseDate']}
+			  		   						)
+			  		   )
+			  , partial( map
+					   , lambda p: mergeDict( p
+					   						, { 'LoanAmount': float(p['LoanAmount'])
+					   						  , 'AccruedInterest': float(p['AccruedInterest'])
+					   						  , 'InterestRate': float(p['InterestRate'])
+					   						  }
+					   						)
+					   )
+			  , partial(map, dict)
+			  , partial(map, lambda row: zip(headers, row))
+			)(spamreader)
 
 
-	# [String] yyyymmdd => [String] yyyy-mm-dd (after increasing 1 day)
+	# [String] yyyymmdd => [String] yyyymmdd (after increasing 1 day)
 	getNextDayDate = compose(
-		lambda d: datetime.strftime(d, '%Y-%m-%d')
+		lambda d: datetime.strftime(d, '%Y%m%d')
 	  , lambda d: d + timedelta(days=1)
 	  , lambda s: datetime.strptime(s, '%Y%m%d')
 	)
@@ -91,12 +125,9 @@ def loadRepoPosition(file1, file2):
 
 
 	logger.debug('loadRepoPosition(): {0}, {1}'.format(file1, file2))
-	closedPositions = filter( )
-	openPositions = compose(
-
-	)
-	
-	return chain(closedPositions, openPositions)
+	return chain( getClosedPositions(getPositions(file1))
+				, getOpenPositions(getPositions(file2)) 
+				)
 
 
 
@@ -107,21 +138,38 @@ def enrichPosition(repoData, position):
 
 	Add collateral id and quantity to a Bloomberg repo position
 	"""
-	return {}
+	logger.debug('enrichPosition(): {0}'.format(position['RepoName']))
+	return \
+	mergeDict( position
+			 , { 'CollateralID': repoData[position['RepoName']][0]
+			   , 'CollateralQuantity': repoData[position['RepoName']][1]
+			   }
+			 )
 
 
 
 def getRepoData():
 	"""
-	Returns:
 	[Dictionary] ([String] repo name -> 
 				  [Tuple] ([String] collateral Id, [Quantity] quantity)
 				 )
+
 	Where there are multiple collaterals under one repo name, the
 	collateral id will be a comma separated string of all collateral
 	ids, the quantity will be the sum of of all collateral quantities.
 	"""
-	return {}
+	logger.debug('getRepoData()')
+
+	getCollateralInfo = lambda group: \
+		( ','.join(map(lambda p: p['CollateralID'], group))
+		, sum(map(lambda p: p['Quantity'], group))
+		)
+
+	return \
+	compose(
+		partial(valmap, getCollateralInfo)
+	  , partial(groupbyToolz, lambda p: p['RepoName'])
+	)(getRepo())
 
 
 
@@ -132,6 +180,16 @@ def createRepoReconFile(directory, date, positions):
 
 	Create a csv file from the repo positions in the directory.
 	"""
+	logger.debug('createRepoReconFile(): {0}'.format(date))
+
+	changeDate = lambda dt: dt[0:4] + '-' + dt[4:6] + '-' + dt[6:8]
+	updatePosition = lambda p: \
+		mergeDict( p
+				 , { 'OpenDate': changeDate(p['OpenDate'])
+				   , 'CloseDate': changeDate(p['CloseDate'])
+				   }
+				 )
+
 	return ''
 
 
@@ -142,6 +200,7 @@ def doUpload(file):
 
 	Side effect: upload the recon file to SFTP
 	"""
+	logger.debug('doUpload(): {0}'.format(file))
 	upload('A2GPosition', [file])
 	return file
 
@@ -154,6 +213,8 @@ if __name__ == "__main__":
 	
 	logger.debug('main(): start')
 	try:
+		initializeDatastore('production')
+
 		bloombergReconFiles = getBloombergReconFiles(getDataDirectory())
 		outputFile = compose(
 			doUpload
