@@ -65,7 +65,7 @@ def handleRepoFiles(fileType):
 			return (Constants.STATUS_ERROR, 'invalid file type {0}'.format(fileType), files)
 
 		filesWithHeader = list(map(addRepoHeaders, files))
-		upload(filesWithHeader)
+		upload('A2GTrade', filesWithHeader)
 		return ( Constants.STATUS_SUCCESS if filesWithHeader != [] \
 					else Constants.STATUS_WARNING
 			   , '\n'.join(filesWithHeader), files + filesWithHeader)
@@ -128,9 +128,9 @@ def moveFiles(outputDir, files):
 
 
 
-def upload(files):
+def upload(remoteDir, files):
 	"""
-	[List] files 
+	[String] remote directory, [List] files 
 
 	side effect: upload the files to Geneva SFTP server.
 
@@ -154,7 +154,7 @@ def upload(files):
 			f.write('open sftp://{0}:{1}@{2}\n'.format(getSftpUser(), \
 					getSftpPassword(), getSftpServer()))
 
-			f.write('cd A2GTrade\n')
+			f.write('cd {0}\n'.format(remoteDir))
 			for file in files:
 				f.write('put {0}\n'.format(file))
 
