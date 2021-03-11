@@ -12,6 +12,7 @@ from aim_xml.utility import getDataDirectory, getMailSender, getMailServer \
 from aim_xml.constants import Constants
 from repo_data.repo_datastore import saveRepoMasterFileToDB, saveRepoTradeFileToDB \
 							, saveRepoRerateFileToDB
+from repo_data.data import initializeDatastore
 from steven_utils.file import getFiles, getFilenameWithoutPath
 from steven_utils.mail import sendMail
 from toolz.functoolz import compose
@@ -118,9 +119,11 @@ def addHeaderAndUpload(fileType):
 
 		filesWithHeader = list(map(addRepoHeaders, files))
 		upload('A2GTrade', filesWithHeader)
-		return ( Constants.STATUS_SUCCESS if filesWithHeader != [] \
-					else Constants.STATUS_WARNING
-			   , '\n'.join(filesWithHeader), files + filesWithHeader)
+
+		return \
+		(Constants.STATUS_SUCCESS, '\n'.join(filesWithHeader), files + filesWithHeader) \
+		if filesWithHeader != [] else \
+		(Constants.STATUS_WARNING, 'Nothing was uploaded', files)
 
 	except:
 		logger.exception('addHeaderAndUpload()')
@@ -245,6 +248,7 @@ if __name__ == "__main__":
 
 	"""
 	fileType = parser.parse_args().fileType
+	initializeDatastore('production')
 	status, message, files = handleRepoFiles(fileType)
 	sendNotificationEmail(fileType, status, message)
 	moveFiles(join(getDataDirectory(), 'SENT'), files)
