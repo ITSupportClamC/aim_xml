@@ -4,6 +4,8 @@
 import re
 import os
 from itertools import chain
+import logging
+logger = logging.getLogger(__name__)
 
 
 

@@ -91,7 +91,7 @@ def loadRepoPosition(file1, file2):
 			  		   )
 			  , partial( map
 					   , lambda p: mergeDict( p
-					   						, { 'LoanAmount': float(p['LoanAmount'])
+					   						, { 'LoanAmount': abs(float(p['LoanAmount']))
 					   						  , 'AccruedInterest': float(p['AccruedInterest'])
 					   						  , 'InterestRate': float(p['InterestRate'])
 					   						  }
@@ -134,36 +134,51 @@ def loadRepoPosition(file1, file2):
 def enrichPosition(repoData, position):
 	"""
 	[Dictionary] repoData, [Dictionary] position 
-		=> [Dictionary] enriched position
+		=> [Iterable] ([Dictionary] enriched position)
 
-	Add collateral id and quantity to a Bloomberg repo position
+	Because a Bloomberg repo position can have one or multiple collaterals,
+	we allocate the accrued interest pro-rata to each collateral.
 	"""
 	logger.debug('enrichPosition(): {0}'.format(position['RepoName']))
+
 	return \
-	mergeDict( position
-			 , { 'CollateralID': repoData[position['RepoName']][0]
-			   , 'CollateralQuantity': repoData[position['RepoName']][1]
-			   }
-			 )
+	map( lambda t: \
+			mergeDict( position
+				 	 , { 'CollateralID': t[0]
+				   	   , 'CollateralQuantity': t[1]
+				   	   , 'AccruedInterest': position['AccruedInterest']*t[2]
+				   	   }
+				 	 )
+	   , repoData[position['RepoName']]
+	   )
+	
 
 
 
 def getRepoData():
 	"""
 	[Dictionary] ([String] repo name -> 
-				  [Tuple] ([String] collateral Id, [Quantity] quantity)
+				  [Iterable] ( [String] collateral Id
+				  			 , [Float] quantity
+				  			 , [Float] share of total loan amount
+				  			 )
 				 )
 
-	Where there are multiple collaterals under one repo name, the
-	collateral id will be a comma separated string of all collateral
-	ids, the quantity will be the sum of of all collateral quantities.
 	"""
 	logger.debug('getRepoData()')
 
-	getCollateralInfo = lambda group: \
-		( ','.join(map(lambda p: p['CollateralID'], group))
-		, sum(map(lambda p: p['Quantity'], group))
-		)
+	getCollateralInfo = compose(
+		lambda t: \
+			map( lambda collateral_t: ( collateral_t[0]
+									  , collateral_t[1]
+									  , collateral_t[2]/t[1]
+									  ) 
+			   , t[0]
+			   )
+	  , lambda L: (L, sum(map(lambda t: t[2], L)))
+	  , list
+	  , partial(map, lambda p: (p['CollateralID'], p['Quantity'], p['CollateralValue']))
+	)
 
 	return \
 	compose(
@@ -220,6 +235,7 @@ if __name__ == "__main__":
 			doUpload
 		  , partial( createRepoReconFile, getDataDirectory()
 		  		   , getDateFromFilename(bloombergReconFiles[0]))
+		  , chain.from_iterable
 		  , partial(map, partial(enrichPosition, getRepoData()))
 		  , lambda t: loadRepoPosition(t[0], t[1])
 		)(bloombergReconFiles)
