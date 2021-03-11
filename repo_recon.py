@@ -219,7 +219,7 @@ def createRepoReconFile(directory, date, positions):
 
 	return \
 	compose(
-		partial(writeCsv, join(directory, 'AIM_Repo_Recon_{0}.csv'.format(date)))
+		partial(writeCsv, join(directory, 'Repo_PosRecon_WithHeader_{0}.csv'.format(date)))
 	  , partial(chain, [headers])
 	  , partial(map, partial(dictToValues, headers))
 	  , partial(map, updatePosition)
