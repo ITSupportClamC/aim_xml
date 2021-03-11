@@ -10,6 +10,8 @@ from aim_xml.utility import getDataDirectory, getMailSender, getMailServer \
 							, getSftpUser, getSftpPassword, getSftpServer \
 							, getDatetimeAsString
 from aim_xml.constants import Constants
+from repo_data.repo_datastore import saveRepoMasterFileToDB, saveRepoTradeFileToDB \
+							, saveRepoRerateFileToDB
 from steven_utils.file import getFiles, getFilenameWithoutPath
 from steven_utils.mail import sendMail
 from toolz.functoolz import compose
@@ -42,7 +44,7 @@ compose(
 def handleRepoFiles(fileType):
 	"""
 	[String] file type
-		=> [Tuple] ([Int] status, [String] message, [List] files)
+		=> ([Int] status, [String] message, [List] files)
 
 	This function does not throw any exceptions.
 
@@ -55,14 +57,64 @@ def handleRepoFiles(fileType):
 	"""
 	logger.debug('handleRepoFiles(): {0}'.format(fileType))
 
+	if not fileType in ('resize', 'master', 'trade', 'rerate', 'dummy_rerate'):
+		return (Constants.STATUS_ERROR, 'invalid file type {0}'.format(fileType), [])
+
+	status01, message01 = saveToDatastore(fileType)
+	status02, message02, files = addHeaderAndUpload(fileType)
+	message = message01 + '\n\n' + message02
+
+	return \
+	(Constants.STATUS_ERROR, message, files) if Constants.STATUS_ERROR in (status01, status02) else \
+	(Constants.STATUS_WARNING, message, files) if Constants.STATUS_WARNING in (status01, status02) else \
+	(Constants.STATUS_SUCCESS, message, files)
+
+
+
+def saveToDatastore(fileType):
+	"""
+	[String] file type
+		=> ([Int] status, [String] message)
+
+	Assume fileType is one of 5 types: resize, master, trade, rerate,
+	and dummy_rerate
+	"""
+	logger.debug('saveToDatastore(): {0}'.format(fileType))
+	if fileType in ('resize', 'dummy_rerate'):
+		return (Constants.STATUS_SUCCESS, 'Nothing saved to db for {0}'.format(fileType))
+
+	handler = saveRepoMasterFileToDB if fileType == 'master' else \
+				saveRepoTradeFileToDB if fileType == 'trade' else \
+				saveRepoRerateFileToDB
+
+	try:
+		total = 0
+		for fn in getFilesByType(fileType):
+			total = total + handler(fn)
+
+		return (Constants.STATUS_SUCCESS, '{0} records saved to datestore'.format(total))
+
+	except:
+		logger.exception('saveToDatastore()')
+		return (Constants.STATUS_ERROR, 'Saving to datestore failed')
+
+
+
+def addHeaderAndUpload(fileType):
+	"""
+	[String] file type
+		=> ([Int] status, [String] message, [List] files)
+
+	Assume fileType is one of 5 types: resize, master, trade, rerate,
+	and dummy_rerate
+	"""
+	logger.debug('addHeaderAndUpload(): {0}'.format(fileType))
+
 	files = []
 	try:
 		files = getFilesByType(fileType)
 		if fileType == 'resize':
 			return (Constants.STATUS_WARNING, '\n'.join(files), files)
-
-		if not fileType in ('master', 'trade', 'rerate', 'dummy_rerate'):
-			return (Constants.STATUS_ERROR, 'invalid file type {0}'.format(fileType), files)
 
 		filesWithHeader = list(map(addRepoHeaders, files))
 		upload('A2GTrade', filesWithHeader)
@@ -71,7 +123,7 @@ def handleRepoFiles(fileType):
 			   , '\n'.join(filesWithHeader), files + filesWithHeader)
 
 	except:
-		logger.exception('handleRepoFiles()')
+		logger.exception('addHeaderAndUpload()')
 		return (Constants.STATUS_ERROR, '\n'.join(files), files)
 
 
