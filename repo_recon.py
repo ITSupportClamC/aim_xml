@@ -141,6 +141,12 @@ def enrichPosition(repoData, position):
 	"""
 	logger.debug('enrichPosition(): {0}'.format(position['RepoName']))
 
+	# [String] date (yyyy-mm-dd) => [String] date (yyyymmdd)
+	changeDate = compose(
+		lambda L: L[0] + L[1] + L[2]
+	  , lambda s: s.split('-')
+	)
+
 	try:
 		return \
 		map( lambda t: \
@@ -149,6 +155,7 @@ def enrichPosition(repoData, position):
 					   	   , 'CollateralQuantity': t[1]
 					   	   , 'LoanAmount': position['LoanAmount']*t[2]
 					   	   , 'AccruedInterest': position['AccruedInterest']*t[2]
+					   	   , 'OpenDate': changeDate(t[3])
 					   	   }
 					 	 )
 		   , repoData[position['RepoName']]
@@ -179,12 +186,19 @@ def getRepoData():
 			map( lambda collateral_t: ( collateral_t[0]
 									  , collateral_t[1]
 									  , collateral_t[2]/t[1]
+									  , collateral_t[3]
 									  ) 
 			   , t[0]
 			   )
 	  , lambda L: (L, sum(map(lambda t: t[2], L)))
 	  , list
-	  , partial(map, lambda p: (p['CollateralID'], p['Quantity'], p['CollateralValue']))
+	  , partial( map
+	  		   , lambda p: ( p['CollateralID']
+	  		   			   , p['Quantity']
+	  		   			   , p['CollateralValue']
+	  		   			   , p['SettleDate']
+	  		   			   )
+	  		   )
 	)
 
 	return \
@@ -192,6 +206,56 @@ def getRepoData():
 		partial(valmap, getCollateralInfo)
 	  , partial(groupbyToolz, lambda p: p['RepoName'])
 	)(getRepo())
+
+
+
+def getAccruedInterest(date, position):
+	"""
+	[Dictionary] recon date (yyyymmdd)
+	[Dictionary] position => [Float] accrued interest
+
+	Bloomberg gives accrued interest of a repo position:
+
+	1) up to the day for OPEN repo;
+	2) whole term for fixed term repo.
+
+	So if it's fixed term repo, we need to calculate the pro-rata
+	share of the accrued interest up to the day of reconciliation.
+	"""
+	getDateTime = lambda s: \
+		datetime.strptime(s, '%Y%m%d')
+
+	# position, date => [Float] pro-rata ratio
+	getDaysRatio = compose(
+		lambda t: (t[1] + 1)/t[0]
+	  , lambda t: ( (t[1] - t[0]).days
+				  , (t[2] - t[0]).days
+				  )
+	  , lambda p, date: ( getDateTime(p['OpenDate'])
+	  					, getDateTime(p['CloseDate'])
+	  					, getDateTime(date) 
+	  					)
+	)
+
+	return \
+	position['AccruedInterest'] if position['CloseDate'] == '99991231' else \
+	position['AccruedInterest'] if position['CloseDate'] <= date else \
+	0 if position['OpenDate'] > date else \
+	position['AccruedInterest'] * getDaysRatio(position, date)
+
+
+
+def updateAccruedInterest(date, position):
+	"""
+	[Dictionary] position => [Dictionary] position
+
+	update the accrued interest
+	"""
+	logger.debug('updateAccruedInterest(): {0}'.format(position['RepoName']))
+	return \
+	mergeDict( position
+			 , {'AccruedInterest': getAccruedInterest(date, position)}
+			 )
 
 
 
@@ -258,7 +322,12 @@ if __name__ == "__main__":
 		outputFile = compose(
 			doUpload
 		  , partial( createRepoReconFile, getDataDirectory()
-		  		   , getDateFromFilename(bloombergReconFiles[0]))
+		  		   , getDateFromFilename(bloombergReconFiles[0])
+		  		   )
+		  , partial( map
+		  		   , partial( updateAccruedInterest
+		  		   			, getDateFromFilename(bloombergReconFiles[0]))
+		  		   )
 		  , chain.from_iterable
 		  , partial(map, partial(enrichPosition, getRepoData()))
 		  , lambda t: loadRepoPosition(t[0], t[1])
