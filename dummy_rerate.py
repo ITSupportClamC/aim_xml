@@ -2,7 +2,7 @@
 #
 # Read Repo trade file, and create dummy rerate file from it.
 # 
-from aim_xml.repo_data import getRepoTradeFromFile
+from aim_xml.repo_xml import getRepoTradeFromFile
 from aim_xml.repo_upload import getFilesByType
 from steven_utils.file import getFilenameWithoutPath, getParentFolder
 from toolz.functoolz import compose

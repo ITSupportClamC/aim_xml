@@ -2,16 +2,16 @@
 # 
 
 import unittest2
-from aim_xml.repo_data import getRepoTradeFromFile, getRawDataFromXML
+from aim_xml.repo_xml import getRepoTradeFromFile, getRawDataFromXML
 from aim_xml.utility import getCurrentDir
 from os.path import join
 
 
 
-class TestRepoDatastore(unittest2.TestCase):
+class TestRepoXML(unittest2.TestCase):
 
 	def __init__(self, *args, **kwargs):
-		super(TestRepoDatastore, self).__init__(*args, **kwargs)
+		super(TestRepoXML, self).__init__(*args, **kwargs)
 
 
 	def testRepoMasterFromFile(self):

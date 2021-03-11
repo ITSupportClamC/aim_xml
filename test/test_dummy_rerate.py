@@ -2,7 +2,7 @@
 # 
 
 import unittest2
-from aim_xml.repo_data import getRepoTradeFromFile, getRepoRerateFromFile
+from aim_xml.repo_xml import getRepoTradeFromFile, getRepoRerateFromFile
 from aim_xml.dummy_rerate import createDummyRerateFile
 from aim_xml.utility import getCurrentDir
 from os.path import join
