@@ -94,7 +94,7 @@ class TestRepoRecon(unittest2.TestCase):
 		position = list(filter(lambda p: p['RepoName'] == 'MMRPEA256T', L))[0]
 		self.assertEqual('MMRPEA256T', position['RepoName'])
 		self.assertEqual('TEST_R', position['Account'])
-		self.assertEqual(280000, position['LoanAmount'])
+		self.assertEqual(-280000, position['LoanAmount'])
 		self.assertEqual(-218.17, position['AccruedInterest'])
 		self.assertEqual('20210203', position['OpenDate'])
 		self.assertEqual('20210310', position['CloseDate'])
@@ -112,12 +112,12 @@ class TestRepoRecon(unittest2.TestCase):
 		L = list(filter(lambda p: p['RepoName'] == 'MMRPE925N6', L))
 		self.assertEqual(2, len(L))
 
-		L = sorted(L, key=lambda p: p['LoanAmount'])
+		L = sorted(L, key=lambda p: abs(p['LoanAmount']))
 
 		position = L[0]
 		self.assertEqual('MMRPE925N6', position['RepoName'])
 		self.assertEqual('TEST_R', position['Account'])
-		self.assertEqual(100000, position['LoanAmount'])
+		self.assertEqual(-100000, position['LoanAmount'])
 		self.assertAlmostEqual(4.8, position['AccruedInterest'], 6)
 		self.assertEqual('20210309', position['OpenDate'])
 		self.assertEqual('99991231', position['CloseDate'])
@@ -128,7 +128,7 @@ class TestRepoRecon(unittest2.TestCase):
 		position = L[1]
 		self.assertEqual('MMRPE925N6', position['RepoName'])
 		self.assertEqual('TEST_R', position['Account'])
-		self.assertEqual(400000, position['LoanAmount'])
+		self.assertEqual(-400000, position['LoanAmount'])
 		self.assertAlmostEqual(19.2, position['AccruedInterest'], 6)
 		self.assertEqual('20210309', position['OpenDate'])
 		self.assertEqual('99991231', position['CloseDate'])

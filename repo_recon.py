@@ -91,7 +91,7 @@ def loadRepoPosition(file1, file2):
 			  		   )
 			  , partial( map
 					   , lambda p: mergeDict( p
-					   						, { 'LoanAmount': abs(float(p['LoanAmount']))
+					   						, { 'LoanAmount': float(p['LoanAmount'])
 					   						  , 'AccruedInterest': float(p['AccruedInterest'])
 					   						  , 'InterestRate': float(p['InterestRate'])
 					   						  }
@@ -244,6 +244,11 @@ if __name__ == "__main__":
 	import logging.config
 	logging.config.fileConfig('logging.config', disable_existing_loggers=False)
 	
+	"""
+	Load Bloomberg AIM reconfiles, enrich it with collateral information
+	and create a new recon file, then upload it and notify the user about
+	the result.
+	"""
 	logger.debug('main(): start')
 	bloombergReconFiles = []
 	try:
