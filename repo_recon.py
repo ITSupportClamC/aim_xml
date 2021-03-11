@@ -9,7 +9,7 @@ from aim_xml.repo_upload import upload, moveFiles, sendNotificationEmail
 from aim_xml.constants import Constants
 from repo_data.data import initializeDatastore, getRepo
 from steven_utils.file import getFiles, getFilenameWithoutPath
-from steven_utils.utility import mergeDict
+from steven_utils.utility import mergeDict, dictToValues, writeCsv
 from toolz.functoolz import compose
 from toolz.itertoolz import groupby as groupbyToolz
 from toolz.dicttoolz import valmap
@@ -141,17 +141,24 @@ def enrichPosition(repoData, position):
 	"""
 	logger.debug('enrichPosition(): {0}'.format(position['RepoName']))
 
-	return \
-	map( lambda t: \
-			mergeDict( position
-				 	 , { 'CollateralID': t[0]
-				   	   , 'CollateralQuantity': t[1]
-				   	   , 'AccruedInterest': position['AccruedInterest']*t[2]
-				   	   }
-				 	 )
-	   , repoData[position['RepoName']]
-	   )
-	
+	try:
+		return \
+		map( lambda t: \
+				mergeDict( position
+					 	 , { 'CollateralID': t[0]
+					   	   , 'CollateralQuantity': t[1]
+					   	   , 'LoanAmount': position['LoanAmount']*t[2]
+					   	   , 'AccruedInterest': position['AccruedInterest']*t[2]
+					   	   }
+					 	 )
+		   , repoData[position['RepoName']]
+		   )
+
+	except:
+		logger.error('enrichPosition(): failed on {0}'.format(position['RepoName']))
+		return [mergeDict( position
+					 	 , {'CollateralID': '', 'CollateralQuantity': 0}
+					 	 )]
 
 
 
@@ -197,7 +204,12 @@ def createRepoReconFile(directory, date, positions):
 	"""
 	logger.debug('createRepoReconFile(): {0}'.format(date))
 
+	headers = ( 'RepoName', 'Account', 'CollateralID', 'CollateralQuantity'
+			  , 'LoanAmount', 'AccruedInterest', 'OpenDate', 'CloseDate'
+			  , 'InterestRate')
+
 	changeDate = lambda dt: dt[0:4] + '-' + dt[4:6] + '-' + dt[6:8]
+	
 	updatePosition = lambda p: \
 		mergeDict( p
 				 , { 'OpenDate': changeDate(p['OpenDate'])
@@ -205,7 +217,13 @@ def createRepoReconFile(directory, date, positions):
 				   }
 				 )
 
-	return ''
+	return \
+	compose(
+		partial(writeCsv, join(directory, 'AIM_Repo_Recon_{0}.csv'.format(date)))
+	  , partial(chain, [headers])
+	  , partial(map, partial(dictToValues, headers))
+	  , partial(map, updatePosition)
+	)(positions)
 
 
 
@@ -227,6 +245,7 @@ if __name__ == "__main__":
 	logging.config.fileConfig('logging.config', disable_existing_loggers=False)
 	
 	logger.debug('main(): start')
+	bloombergReconFiles = []
 	try:
 		initializeDatastore('production')
 
@@ -251,4 +270,4 @@ if __name__ == "__main__":
 		sendNotificationEmail( 'AIM reconciliation', Constants.STATUS_SUCCESS
 							 , outputFile)
 		moveFiles( join(getDataDirectory(), 'Position_SENT')
-				 , bloombergReconFiles + [outputFile])
+				 , bloombergReconFiles + (outputFile, ))

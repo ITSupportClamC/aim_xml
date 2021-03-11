@@ -86,13 +86,12 @@ class TestRepoRecon(unittest2.TestCase):
 
 		self.assertEqual(9, len(L))
 		self.verifyEnrichedPosition1(L) # closed position
-		# self.verifyEnrichedPosition2(L) # multi collateral
+		self.verifyEnrichedPosition2(L) # multi collateral
 
 
 
 	def verifyEnrichedPosition1(self, L):
-		position = list(filter( lambda p: p['RepoName'] == 'MMRPEA256T'
-							  , L))[0]
+		position = list(filter(lambda p: p['RepoName'] == 'MMRPEA256T', L))[0]
 		self.assertEqual('MMRPEA256T', position['RepoName'])
 		self.assertEqual('TEST_R', position['Account'])
 		self.assertEqual(280000, position['LoanAmount'])
@@ -102,3 +101,37 @@ class TestRepoRecon(unittest2.TestCase):
 		self.assertEqual(0.85, position['InterestRate'])
 		self.assertEqual('HK0000163607', position['CollateralID'])
 		self.assertEqual(350000, position['CollateralQuantity'])
+
+
+
+	def verifyEnrichedPosition2(self, L):
+		"""
+		For details of this multi collateral ticket, please refer to
+		file "RepoTrade_20210309_20210309190913.xml" in samples directory.
+		"""
+		L = list(filter(lambda p: p['RepoName'] == 'MMRPE925N6', L))
+		self.assertEqual(2, len(L))
+
+		L = sorted(L, key=lambda p: p['LoanAmount'])
+
+		position = L[0]
+		self.assertEqual('MMRPE925N6', position['RepoName'])
+		self.assertEqual('TEST_R', position['Account'])
+		self.assertEqual(100000, position['LoanAmount'])
+		self.assertAlmostEqual(4.8, position['AccruedInterest'], 6)
+		self.assertEqual('20210309', position['OpenDate'])
+		self.assertEqual('99991231', position['CloseDate'])
+		self.assertEqual(0.95, position['InterestRate'])
+		self.assertEqual('XS2178949561', position['CollateralID'])
+		self.assertEqual(120000, position['CollateralQuantity'])
+
+		position = L[1]
+		self.assertEqual('MMRPE925N6', position['RepoName'])
+		self.assertEqual('TEST_R', position['Account'])
+		self.assertEqual(400000, position['LoanAmount'])
+		self.assertAlmostEqual(19.2, position['AccruedInterest'], 6)
+		self.assertEqual('20210309', position['OpenDate'])
+		self.assertEqual('99991231', position['CloseDate'])
+		self.assertEqual(0.95, position['InterestRate'])
+		self.assertEqual('XS2282244560', position['CollateralID'])
+		self.assertEqual(500000, position['CollateralQuantity'])
