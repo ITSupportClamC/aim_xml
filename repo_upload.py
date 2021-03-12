@@ -48,21 +48,30 @@ def handleRepoFiles(fileType):
 		=> ([Int] status, [String] message, [List] files)
 
 	This function does not throw any exceptions.
-
-	1. get repo files based on its type (master, trade, rerate
-		dummy_rerate, resize)
-	2. Take action on the file types: add header and upload, or
-		give warning (if it's resize)
-	3. send notification email.
-	4. move input files to another directory
 	"""
 	logger.debug('handleRepoFiles(): {0}'.format(fileType))
 
 	if not fileType in ('resize', 'master', 'trade', 'rerate', 'dummy_rerate'):
 		return (Constants.STATUS_ERROR, 'invalid file type {0}'.format(fileType), [])
 
-	status01, message01 = saveToDatastore(fileType)
-	status02, message02, files = addHeaderAndUpload(fileType)
+	try:
+		files = getFilesByType(fileType)
+	except:
+		logger.exception('handleRepoFiles()')
+		return (Constants.STATUS_ERROR, 'handle {0} files failed'.format(fileType), [])
+
+
+	if files == []:
+		return (Constants.STATUS_WARNING, 'No {0} files'.format(fileType), [])
+
+	status01, message01 = \
+		saveToDatastore(fileType, files) if fileType in ('master', 'trade', 'rerate') \
+		else (Constants.STATUS_SUCCESS, 'Nothing to save to db for {0}'.format(fileType))
+
+	status02, message02, files = \
+		addHeaderAndUpload(files) if fileType in ('master', 'trade', 'rerate', 'dummy_rerate') \
+		else (Constants.STATUS_WARNING, '\n'.join(files), files)
+
 	message = message01 + '\n\n' + message02
 
 	return \
@@ -72,28 +81,28 @@ def handleRepoFiles(fileType):
 
 
 
-def saveToDatastore(fileType):
+def saveToDatastore(fileType, files):
 	"""
-	[String] file type
+	[String] fileType, [List] files
 		=> ([Int] status, [String] message)
 
-	Assume fileType is one of 5 types: resize, master, trade, rerate,
-	and dummy_rerate
+	Assume fileType is master, trade, or rerate.
+
+	This function does not throw any exceptions.
 	"""
-	logger.debug('saveToDatastore(): {0}'.format(fileType))
-	if fileType in ('resize', 'dummy_rerate'):
-		return (Constants.STATUS_SUCCESS, 'Nothing saved to db for {0}'.format(fileType))
+	logger.debug('saveToDatastore()')
 
 	handler = saveRepoMasterFileToDB if fileType == 'master' else \
 				saveRepoTradeFileToDB if fileType == 'trade' else \
 				saveRepoRerateFileToDB
 
 	try:
-		total = 0
-		for fn in getFilesByType(fileType):
-			total = total + handler(fn)
+		total = sum(map(handler, files))
 
-		return (Constants.STATUS_SUCCESS, '{0} records saved to datestore'.format(total))
+		return \
+		(Constants.STATUS_SUCCESS, '{0} records saved to datestore'.format(total)) \
+		if total > 0 else \
+		(Constants.STATUS_ERROR, 'No records saved to datestore')
 
 	except:
 		logger.exception('saveToDatastore()')
@@ -101,29 +110,23 @@ def saveToDatastore(fileType):
 
 
 
-def addHeaderAndUpload(fileType):
+def addHeaderAndUpload(files):
 	"""
-	[String] file type
+	[List] files
 		=> ([Int] status, [String] message, [List] files)
 
-	Assume fileType is one of 5 types: resize, master, trade, rerate,
-	and dummy_rerate
+	Assume files are are one of 4 types: master, trade, rerate, 
+	or dummy_rerate
+
+	This function does not throw any exceptions.
 	"""
-	logger.debug('addHeaderAndUpload(): {0}'.format(fileType))
-
-	files = []
+	logger.debug('addHeaderAndUpload()')
 	try:
-		files = getFilesByType(fileType)
-		if fileType == 'resize':
-			return (Constants.STATUS_WARNING, '\n'.join(files), files)
-
 		filesWithHeader = list(map(addRepoHeaders, files))
 		upload('A2GTrade', filesWithHeader)
 
 		return \
-		(Constants.STATUS_SUCCESS, '\n'.join(filesWithHeader), files + filesWithHeader) \
-		if filesWithHeader != [] else \
-		(Constants.STATUS_WARNING, 'Nothing was uploaded', files)
+		(Constants.STATUS_SUCCESS, '\n'.join(filesWithHeader), files + filesWithHeader)
 
 	except:
 		logger.exception('addHeaderAndUpload()')
