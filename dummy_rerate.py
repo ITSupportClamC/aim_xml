@@ -113,7 +113,22 @@ if __name__ == "__main__":
 	Search for trade files in the data directory (see config file), for each
 	trade file there, produce dummy rerate file if necessary 
 	"""
-	logger.debug('main:')
-	for file in getFilesByType('trade'):
-		logger.debug('main: process trade file: {0}'.format(file))
-		logger.debug('main: create dummy rerate file: {0}'.format(createDummyRerateFile(file)))
+	import sys
+	logger.debug('start')
+	try:
+		files = list(getFilesByType('trade'))
+		if files == []:
+			logger.debug('no trade files found')
+	
+	except:
+		logger.exception('')
+		sys.exit(1)
+
+
+	for file in files:
+		try:
+			logger.debug('process trade file: {0}'.format(file))
+			logger.debug('output file {0}'.format(createDummyRerateFile(file)))
+
+		except:
+			logger.exception('')
