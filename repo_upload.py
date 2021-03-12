@@ -58,11 +58,10 @@ def handleRepoFiles(fileType):
 		files = getFilesByType(fileType)
 	except:
 		logger.exception('handleRepoFiles()')
-		return (Constants.STATUS_ERROR, 'handle {0} files failed'.format(fileType), [])
-
+		return (Constants.STATUS_ERROR, 'Failed to get {0} files'.format(fileType), [])
 
 	if files == []:
-		return (Constants.STATUS_WARNING, 'No {0} files'.format(fileType), [])
+		return (Constants.STATUS_NO_INPUT, 'No {0} files'.format(fileType), [])
 
 	status01, message01 = \
 		saveToDatastore(fileType, files) if fileType in ('master', 'trade', 'rerate') \
@@ -143,11 +142,13 @@ def sendNotificationEmail(fileType, status, message):
 	logger.debug('sendNotificationEmail():')
 
 	getSubject = lambda fileType, status: \
+		'Repo ' + fileType + ' no files found' \
+		if status == Constants.STATUS_NO_INPUT else \
 		'Repo ' + fileType + ' upload succesful' \
 		if status == Constants.STATUS_SUCCESS else \
 		'Warning: Repo ' + fileType \
 		if  status == Constants.STATUS_WARNING else \
-		'Repo ' + fileType + ' upload failed'
+		'Error: Repo ' + fileType + ' upload failed'
 
 
 	sendMail( message

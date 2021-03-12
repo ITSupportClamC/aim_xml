@@ -53,7 +53,7 @@ isRepoDummyRerate = compose(
 # [String] file => [Bool] is the file a repo resize file
 isRepoResize = compose(
 	lambda file: \
-		file.lower().startswith('reporesize') and not 'WithHeaders' in file
+		file.lower().startswith('repo_resize') and not 'WithHeaders' in file
   , getFilenameWithoutPath
 )
 
