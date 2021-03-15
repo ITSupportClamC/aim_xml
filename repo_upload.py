@@ -68,35 +68,6 @@ def handleRepoFiles(fileType):
 
 
 
-# def saveToDatastore(fileType, files):
-# 	"""
-# 	[String] fileType, [List] files
-# 		=> ([Int] status, [String] message)
-
-# 	Assume fileType is master, trade, or rerate.
-
-# 	This function does not throw any exceptions.
-# 	"""
-# 	logger.debug('saveToDatastore()')
-
-# 	handler = saveRepoMasterFileToDB if fileType == 'master' else \
-# 				saveRepoTradeFileToDB if fileType == 'trade' else \
-# 				saveRepoRerateFileToDB
-
-# 	try:
-# 		total = sum(map(handler, files))
-
-# 		return \
-# 		(Constants.STATUS_SUCCESS, '{0} records saved to datestore'.format(total)) \
-# 		if total > 0 else \
-# 		(Constants.STATUS_ERROR, 'No records saved to datestore')
-
-# 	except:
-# 		logger.exception('saveToDatastore()')
-# 		return (Constants.STATUS_ERROR, 'Saving to datestore failed')
-
-
-
 def addHeaderAndUpload(files):
 	"""
 	[List] files
