@@ -78,3 +78,19 @@ getSftpPassword = lambda : \
 
 getSftpServer = lambda : \
 	loadConfigFile('aim_xml.config')['sftp']['server']
+
+
+
+def sendNotificationEmail(subject, message):
+	"""
+	[String] subject, [String] message
+
+	send email to notify the status. 
+	"""
+	logger.debug('sendNotificationEmail():')
+	sendMail( message
+			, subject
+			, getMailSender()
+			, getNotificationMailRecipients()
+			, getMailServer()
+			, getMailTimeout())

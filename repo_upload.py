@@ -4,8 +4,7 @@
 # 
 from aim_xml.add_header import addRepoHeaders, isRepoMaster, isRepoTrade \
 							, isRepoRerate, isRepoDummyRerate, isRepoResize
-from aim_xml.utility import getDataDirectory, getMailSender, getMailServer \
-							, getMailTimeout, getNotificationMailRecipients \
+from aim_xml.utility import getDataDirectory, sendNotificationEmail \
 							, getSftpTimeout, getWinScpPath, getCurrentDir \
 							, getSftpUser, getSftpPassword, getSftpServer \
 							, getDatetimeAsString
@@ -63,49 +62,38 @@ def handleRepoFiles(fileType):
 	if files == []:
 		return (Constants.STATUS_NO_INPUT, 'No {0} files'.format(fileType), [])
 
-	status01, message01 = \
-		saveToDatastore(fileType, files) if fileType in ('master', 'trade', 'rerate') \
-		else (Constants.STATUS_SUCCESS, 'Nothing to save to db for {0}'.format(fileType))
-
-	status02, message02, files = \
-		addHeaderAndUpload(files) if fileType in ('master', 'trade', 'rerate', 'dummy_rerate') \
-		else (Constants.STATUS_WARNING, '\n'.join(files), files)
-
-	message = message01 + '\n\n' + message02
-
 	return \
-	(Constants.STATUS_ERROR, message, files) if Constants.STATUS_ERROR in (status01, status02) else \
-	(Constants.STATUS_WARNING, message, files) if Constants.STATUS_WARNING in (status01, status02) else \
-	(Constants.STATUS_SUCCESS, message, files)
+	addHeaderAndUpload(files) if fileType in ('master', 'trade', 'rerate', 'dummy_rerate') \
+	else (Constants.STATUS_WARNING, '\n'.join(files), files)
 
 
 
-def saveToDatastore(fileType, files):
-	"""
-	[String] fileType, [List] files
-		=> ([Int] status, [String] message)
+# def saveToDatastore(fileType, files):
+# 	"""
+# 	[String] fileType, [List] files
+# 		=> ([Int] status, [String] message)
 
-	Assume fileType is master, trade, or rerate.
+# 	Assume fileType is master, trade, or rerate.
 
-	This function does not throw any exceptions.
-	"""
-	logger.debug('saveToDatastore()')
+# 	This function does not throw any exceptions.
+# 	"""
+# 	logger.debug('saveToDatastore()')
 
-	handler = saveRepoMasterFileToDB if fileType == 'master' else \
-				saveRepoTradeFileToDB if fileType == 'trade' else \
-				saveRepoRerateFileToDB
+# 	handler = saveRepoMasterFileToDB if fileType == 'master' else \
+# 				saveRepoTradeFileToDB if fileType == 'trade' else \
+# 				saveRepoRerateFileToDB
 
-	try:
-		total = sum(map(handler, files))
+# 	try:
+# 		total = sum(map(handler, files))
 
-		return \
-		(Constants.STATUS_SUCCESS, '{0} records saved to datestore'.format(total)) \
-		if total > 0 else \
-		(Constants.STATUS_ERROR, 'No records saved to datestore')
+# 		return \
+# 		(Constants.STATUS_SUCCESS, '{0} records saved to datestore'.format(total)) \
+# 		if total > 0 else \
+# 		(Constants.STATUS_ERROR, 'No records saved to datestore')
 
-	except:
-		logger.exception('saveToDatastore()')
-		return (Constants.STATUS_ERROR, 'Saving to datestore failed')
+# 	except:
+# 		logger.exception('saveToDatastore()')
+# 		return (Constants.STATUS_ERROR, 'Saving to datestore failed')
 
 
 
@@ -124,8 +112,10 @@ def addHeaderAndUpload(files):
 		filesWithHeader = list(map(addRepoHeaders, files))
 		upload('A2GTrade', filesWithHeader)
 
-		return \
-		(Constants.STATUS_SUCCESS, '\n'.join(filesWithHeader), files + filesWithHeader)
+		return ( Constants.STATUS_SUCCESS
+			   , '\n'.join(filesWithHeader)
+			   , files + filesWithHeader
+			   )
 
 	except:
 		logger.exception('addHeaderAndUpload()')
@@ -133,13 +123,13 @@ def addHeaderAndUpload(files):
 
 
 
-def sendNotificationEmail(fileType, status, message):
+def sendUploadNotification(fileType, status, message):
 	"""
 	[String] fund name, [Int] status, [String] message
 
-	send email to notify the status. 
+	send email to notify the status.
 	"""
-	logger.debug('sendNotificationEmail():')
+	logger.debug('sendUploadNotification():')
 
 	getSubject = lambda fileType, status: \
 		'Repo ' + fileType + ' no files found' \
@@ -150,13 +140,7 @@ def sendNotificationEmail(fileType, status, message):
 		if  status == Constants.STATUS_WARNING else \
 		'Error: Repo ' + fileType + ' upload failed'
 
-
-	sendMail( message
-			, getSubject(fileType, status)
-			, getMailSender()
-			, getNotificationMailRecipients()
-			, getMailServer()
-			, getMailTimeout())
+	sendNotificationEmail(getSubject(fileType, status), message)
 
 
 
@@ -254,5 +238,5 @@ if __name__ == "__main__":
 	fileType = parser.parse_args().fileType
 	initializeDatastore('production')
 	status, message, files = handleRepoFiles(fileType)
-	sendNotificationEmail(fileType, status, message)
+	sendUploadNotification(fileType, status, message)
 	moveFiles(join(getDataDirectory(), 'SENT'), files)

@@ -4,8 +4,8 @@
 # collateral id and quantity from datastore, then create the new
 # reconciliation file.
 # 
-from aim_xml.utility import getDataDirectory
-from aim_xml.repo_upload import upload, moveFiles, sendNotificationEmail
+from aim_xml.utility import getDataDirectory, sendNotificationEmail
+from aim_xml.repo_upload import upload, moveFiles
 from aim_xml.constants import Constants
 from repo_data.data import initializeDatastore, getRepo
 from steven_utils.file import getFiles, getFilenameWithoutPath
@@ -303,6 +303,21 @@ def doUpload(file):
 
 
 
+def sendReconNotification(status, message):
+	"""
+	[Int] status, [String] message
+
+	Side effect: send an email notification about reconciliation status
+	"""
+	getSubject = lambda status: \
+		'AIM reconciliation upload failed' if status == Constants.STATUS_ERROR else \
+		'AIM reconciliation upload successful' if status == Constants.STATUS_SUCCESS \
+		else 'AIM reconciliation upload with unknown conditions'
+
+	sendNotificationEmail(getSubject(status), message)
+
+
+
 
 if __name__ == "__main__":
 	import logging.config
@@ -335,13 +350,12 @@ if __name__ == "__main__":
 
 	except:
 		logger.exception('main()')
-		sendNotificationEmail('AIM reconciliation', Constants.STATUS_ERROR, '')
+		sendReconNotification(Constants.STATUS_ERROR, '')
 		moveFiles( join(getDataDirectory(), 'Position_SENT')
 				 , bloombergReconFiles)
 
 	else:
 		logger.debug('main(): success')
-		sendNotificationEmail( 'AIM reconciliation', Constants.STATUS_SUCCESS
-							 , outputFile)
+		sendReconNotification(Constants.STATUS_SUCCESS, outputFile)
 		moveFiles( join(getDataDirectory(), 'Position_SENT')
 				 , bloombergReconFiles + (outputFile, ))
