@@ -24,9 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 """
-	[String] file type => [List] files of that type
+	[String] file type, [String] directory
+		=> [List] files of that type
 """
-getFilesByType = lambda fileType: \
+getFilesByType = lambda fileType, directory=getDataDirectory(): \
 compose(
 	list
   , lambda files: \
@@ -36,8 +37,7 @@ compose(
   		filter(isRepoDummyRerate, files) if fileType == 'dummy_rerate' else \
   		filter(isRepoResize, files) if fileType == 'resize' else []
   , lambda directory: getFiles(directory, True)
-  , getDataDirectory
-)()
+)(directory)
 
 
 
