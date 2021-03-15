@@ -175,6 +175,7 @@ def getRepoData():
 				  [Iterable] ( [String] collateral Id
 				  			 , [Float] quantity
 				  			 , [Float] share of total loan amount
+				  			 , [String] settle date
 				  			 )
 				 )
 
