@@ -13,8 +13,8 @@ from repo_data.repo_datastore import saveRepoMasterFileToDB, saveRepoTradeFileTo
 							, saveRepoRerateFileToDB
 from repo_data.data import initializeDatastore
 from steven_utils.file import getFiles, getFilenameWithoutPath
-from steven_utils.mail import sendMail
 from toolz.functoolz import compose
+from functools import partial
 from os.path import join
 from subprocess import run
 import shutil
@@ -158,16 +158,21 @@ def moveFiles(outputDir, files):
 		Assume: fn is without path and have only one '.' in it, like
 		xxxxx.xml
 	"""
+	logger.debug('moveFiles()')
+
 	rename = compose(
-		lambda L: L[0] + '_' + getDatetimeAsString() + '.' + L[1]
+		partial(join, outputDir)
+	  , lambda L: L[0] + '_' + getDatetimeAsString() + '.' + L[1]
 	  , lambda fn: fn.split('.')
+	  , getFilenameWithoutPath
 	)
 
 	for fn in files:
-		logger.debug('moveFiles(): {0}'.format(fn))
-		shutil.move( fn
-				   , join( outputDir
-				   		 , rename(getFilenameWithoutPath(fn))))
+		logger.debug('move file: {0}'.format(fn))
+		try:
+			shutil.move(fn, rename(fn))
+		except:
+			logger.exception('moveFiles()')
 
 
 

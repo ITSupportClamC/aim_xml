@@ -2,6 +2,7 @@
 #
 # Functions related to Bloomberg AIM XML trade file.
 # 
+from steven_utils.mail import sendMail
 from os.path import dirname, abspath, join
 from datetime import datetime
 from functools import lru_cache
@@ -85,12 +86,16 @@ def sendNotificationEmail(subject, message):
 	"""
 	[String] subject, [String] message
 
-	send email to notify the status. 
+	Side effect: send email.
+
+	This function does not throw exceptions.
 	"""
 	logger.debug('sendNotificationEmail():')
-	sendMail( message
-			, subject
-			, getMailSender()
-			, getNotificationMailRecipients()
-			, getMailServer()
-			, getMailTimeout())
+	try:
+		sendMail( message, subject, getMailSender()
+				, getNotificationMailRecipients()
+				, getMailServer()
+				, getMailTimeout()
+				)
+	except:
+		logger.exception('sendNotificationEmail()')
