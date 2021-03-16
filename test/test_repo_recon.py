@@ -27,7 +27,7 @@ class TestRepoRecon(unittest2.TestCase):
 
 
 	def testGetBloombergReconFiles(self):
-		directory = join(getCurrentDir(), 'samples')
+		directory = join(getCurrentDir(), 'samples', 'data')
 		file1, file2 = getBloombergReconFiles(directory)
 		self.assertEqual('Repo_PosRecon_20210309_1.csv', getFilenameWithoutPath(file1))
 		self.assertEqual('Repo_PosRecon_20210309_2.csv', getFilenameWithoutPath(file2))
@@ -92,6 +92,36 @@ class TestRepoRecon(unittest2.TestCase):
 		self.verifyEnrichedPosition2(L) # multi collateral, type OPEN
 		self.verifyEnrichedPosition3(L) # fixed term
 		self.verifyEnrichedPosition4(L) # not started yet
+
+
+
+	def testAll(self):
+		clearRepoData()
+		saveRepoMasterFileToDB(
+			join(getCurrentDir(), 'samples', 'RepoMaster_20210315_20210315193134.xml'))
+
+		saveRepoTradeFileToDB(
+			join(getCurrentDir(), 'samples', 'RepoTrade_20210315_20210315194216.xml'))
+
+		saveRepoRerateFileToDB(
+			join(getCurrentDir(), 'samples', 'Repo_ReRate_20210315_20210315211227.xml'))
+
+		file1 = join(getCurrentDir(), 'samples', 'Repo_PosRecon_20210315_1.csv')
+		file2 = join(getCurrentDir(), 'samples', 'Repo_PosRecon_20210315_2.csv')
+
+		result = compose(
+			list
+		  , partial( map
+		  		   , partial( updateAccruedInterest
+		  		   			, getDateFromFilename(file1))
+		  		   )
+		  , chain.from_iterable
+		  , partial(map, partial(enrichPosition, getRepoData()))
+		  , loadRepoPosition
+		)(file1, file2)
+
+		self.verifyEnrichedPosition5(result)
+		self.verifyEnrichedPosition6(result)
 
 
 
@@ -168,3 +198,38 @@ class TestRepoRecon(unittest2.TestCase):
 		self.assertEqual(0.80, position['InterestRate'])
 		self.assertEqual('XS1897158892', position['CollateralID'])
 		self.assertEqual(770000, position['CollateralQuantity'])
+
+
+
+	def verifyEnrichedPosition5(self, L):
+		L = list(filter(lambda p: p['RepoName'] == 'MMRPED26I7', L))
+		self.assertEqual(1, len(L))
+
+		position = L[0]
+		self.assertEqual('MMRPED26I7', position['RepoName'])
+		self.assertEqual('TEST_R', position['Account'])
+		self.assertEqual(-100000, position['LoanAmount'])
+		self.assertAlmostEqual(-125.28, position['AccruedInterest'], 6)
+		self.assertEqual('20210203', position['OpenDate'])
+		self.assertEqual('20210316', position['CloseDate'])
+		self.assertEqual(1.1, position['InterestRate'])
+		self.assertEqual('US00131MAJ27', position['CollateralID'])
+		self.assertEqual(120000, position['CollateralQuantity'])
+
+
+
+	def verifyEnrichedPosition6(self, L):
+		L = list(filter(lambda p: p['RepoName'] == 'MMRPE326EA', L))
+		self.assertEqual(2, len(L))
+
+		position = sorted(L, key=lambda p: p['LoanAmount'])[0]
+
+		self.assertEqual('MMRPE326EA', position['RepoName'])
+		self.assertEqual('TEST_R', position['Account'])
+		self.assertEqual(-350000, position['LoanAmount'])
+		self.assertAlmostEqual(-110.83, position['AccruedInterest'], 2)
+		self.assertEqual('20210304', position['OpenDate'])
+		self.assertEqual('99991231', position['CloseDate'])
+		self.assertEqual(0.95, position['InterestRate'])
+		self.assertEqual('HK0000163607', position['CollateralID'])
+		self.assertEqual(450000, position['CollateralQuantity'])

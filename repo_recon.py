@@ -67,13 +67,17 @@ def loadRepoPosition(file1, file2):
 	[String] Bloomberg recon file 1 (for closed positions)
 	[String] Bloomberg recon file 2 (for open positions)
 		=> [Iterable] ([Dictionary] repo position)
+	
+	For both files, take out positions whose loan amount = 0
+	Then,
 
-	for file 1, filter those closing on T+1,
-	for file 2, filter those still open on T+1
-	combine them
+	from file 1, filter those positions in file 1 but not in file 2
+	from file 2, filter those positions in file 2
+
+	Combine them
 	"""
 	def getPositions(file):
-		""" [String] file => [Iterable] ([Dictionary] position) """
+		""" [String] file => [List] ([Dictionary] position) """
 		logger.debug('loadRepoPosition(): {0}'.format(file))
 		headers = ( 'RepoName', 'Account', 'LoanAmount', 'AccruedInterest'
 				  , 'OpenDate', 'CloseDate', 'InterestRate')
@@ -102,31 +106,24 @@ def loadRepoPosition(file1, file2):
 			)(spamreader)
 
 
-	# [String] yyyymmdd => [String] yyyymmdd (after increasing 1 day)
-	getNextDayDate = compose(
-		lambda d: datetime.strftime(d, '%Y%m%d')
-	  , lambda d: d + timedelta(days=1)
-	  , lambda s: datetime.strptime(s, '%Y%m%d')
+	# [Iterable] repo positions => [Set] repo names that still exist
+	getExistingRepoNames = compose(
+		set
+	  , partial(map, lambda p: p['RepoName'])
+	  , partial(filter, lambda p: p['LoanAmount'] != 0)
 	)
 
+	file1Positions = getPositions(file1)
+	file2Positions = getPositions(file2)
 
-	getClosedPositions = partial(
-		filter
-	  , lambda p: \
-	  		p['CloseDate'] == getNextDayDate(getDateFromFilename(file1))
-	)
+	s1 = getExistingRepoNames(file1Positions)
+	s2 = getExistingRepoNames(file2Positions)
 
+	return chain( filter( lambda p: p['RepoName'] in (s1-s2)
+						, file1Positions) # positions that close in T+1
 
-	getOpenPositions = partial(
-		filter
-	  , lambda p: p['LoanAmount'] != 0 and \
-	  		p['CloseDate'] > getNextDayDate(getDateFromFilename(file1))
-	)
-
-
-	logger.debug('loadRepoPosition(): {0}, {1}'.format(file1, file2))
-	return chain( getClosedPositions(getPositions(file1))
-				, getOpenPositions(getPositions(file2)) 
+				, filter( lambda p: p['RepoName'] in s2
+						, file2Positions) # positions that still open in T+1
 				)
 
 
