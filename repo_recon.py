@@ -24,9 +24,36 @@ logger = logging.getLogger(__name__)
 
 def getBloombergReconFiles(directory):
 	"""
-	[String] directory => [Tuple] file1, file2
+	[String] directory => ([String] file1, [String] file2)
 	"""
 	logger.debug('getBloombergReconFiles(): {0}'.format(directory))
+
+	def checkDates(d1, d2):
+		"""
+		d1 can be Mon, Tue, Wed, Thu, Fri
+		d2 can be Mon, Tue, Wed, Thu, Sun
+
+		when d1, d2 are equal, they must Mon, Tue, Wed, or Thu
+		when d1, d2 are not equal, then d1 must be Fri, d2 must be Sun
+		and d2 - d1 must be 2 days.
+
+		If either of the above are satisfied, then return True,
+		else return False.
+		"""
+		logger.debug('checkDates(): {0}, {1}'.format(d1, d2))
+
+		d1 = datetime.strptime(d1, '%Y%m%d')
+		d2 = datetime.strptime(d2, '%Y%m%d')
+
+		if d1 == d2 and d1.weekday() in (0, 1, 2, 3):
+			return True
+
+		if d1 != d2 and d1.weekday() == 4 and d2.weekday() == 6 and (d2 - d1).days == 2:
+			return True
+
+		return False
+
+
 	files = compose(
 		list
 	  , partial(filter, lambda fn: fn.startswith('Repo_PosRecon_'))
@@ -37,7 +64,7 @@ def getBloombergReconFiles(directory):
 	F2 = list(filter(lambda fn: fn.endswith('_2.csv'), files))
 
 	if len(F1) == len(F2) and len(F1) == 1 and \
-		getDateFromFilename(F1[0]) == getDateFromFilename(F2[0]):
+		checkDates(getDateFromFilename(F1[0]), getDateFromFilename(F2[0])):
 
 		return (join(directory, F1[0]), join(directory, F2[0]))
 
@@ -335,11 +362,11 @@ if __name__ == "__main__":
 		outputFile = compose(
 			doUpload
 		  , partial( createRepoReconFile, getDataDirectory()
-		  		   , getDateFromFilename(bloombergReconFiles[0])
+		  		   , getDateFromFilename(bloombergReconFiles[1])
 		  		   )
 		  , partial( map
 		  		   , partial( updateAccruedInterest
-		  		   			, getDateFromFilename(bloombergReconFiles[0]))
+		  		   			, getDateFromFilename(bloombergReconFiles[1]))
 		  		   )
 		  , chain.from_iterable
 		  , partial(map, partial(enrichPosition, getRepoData()))
